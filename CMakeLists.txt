@@ -48,7 +48,10 @@ else()
         )
 endif()
 
-target_include_directories(${PROJECT_NAME} PRIVATE include)
+target_include_directories(${PROJECT_NAME} PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+)
 
 if (WIN32)
     set(LIB_DIRS "lib")
@@ -69,34 +72,29 @@ install(TARGETS ${PROJECT_NAME}
     RUNTIME DESTINATION ${RUNTIME_DIRS}
     )
 
-include(CMakePackageConfigHelpers)
-write_basic_package_version_file(
-    "${CMAKE_CURRENT_BINARY_DIR}/easyrtmp/EasyRTMPConfigVersion.cmake"
-    VERSION ${easyrtmp_VERSION}
-    COMPATIBILITY AnyNewerVersion
-    )
-
-export(EXPORT easyrtmp_targets
-    FILE "${CMAKE_CURRENT_BINARY_DIR}/easyrtmp/EasyRTMPTargets.cmake"
-    NAMESPACE EasyRTMP::
-)
-configure_file(cmake/EasyRTMPConfig.cmake
-    "${CMAKE_CURRENT_BINARY_DIR}/easyrtmp/EasyRTMPConfig.cmake"
-)
-
-set(ConfigPackageLocation lib/cmake/EasyRTMP)
 install(EXPORT easyrtmp_targets
-    FILE
-    EasyRTMPTargets.cmake
-    NAMESPACE
-    EasyRTMP::
-    DESTINATION
-    ${ConfigPackageLocation}
-    )
-install(
-    FILES
-    "${CMAKE_CURRENT_BINARY_DIR}/easyrtmp/EasyRTMPConfig.cmake"
-    "${CMAKE_CURRENT_BINARY_DIR}/easyrtmp/EasyRTMPConfigVersion.cmake"
-    DESTINATION
-    ${ConfigPackageLocation}
-    )
+  FILE EasyRTMPTargets.cmake
+  NAMESPACE EasyRTMP::
+  DESTINATION lib/cmake/easyrtmp
+)
+include(CMakePackageConfigHelpers)
+configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Config.cmake.in
+  "${CMAKE_CURRENT_BINARY_DIR}/EasyRTMPConfig.cmake"
+  INSTALL_DESTINATION "lib/cmake/easyrtmp"
+  NO_SET_AND_CHECK_MACRO
+  NO_CHECK_REQUIRED_COMPONENTS_MACRO
+  )
+
+write_basic_package_version_file(
+  "${CMAKE_CURRENT_BINARY_DIR}/EasyRTMPConfigVersion.cmake"
+  VERSION "${easyrtmp_VERSION_MAJOR}.${easyrtmp_VERSION_MINOR}"
+  COMPATIBILITY AnyNewerVersion
+)
+install(FILES
+  ${CMAKE_CURRENT_BINARY_DIR}/EasyRTMPConfig.cmake
+  ${CMAKE_CURRENT_BINARY_DIR}/EasyRTMPConfigVersion.cmake
+  DESTINATION lib/cmake/easyrtmp
+  )
+if ($<$<CONFIG:Debug>:true>)
+    install(FILES $<TARGET_PDB_FILE:${PROJECT_NAME}> DESTINATION bin)
+endif()
